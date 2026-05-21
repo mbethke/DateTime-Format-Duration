@@ -9,6 +9,7 @@ use DateTime::Duration;
 use constant MAX_NANOSECONDS => 1000000000;  # 1E9 = almost 32 bits
 use strict;
 
+use Scalar::Util 'blessed';
 require Exporter;
 our @ISA = qw/Exporter/;
 our @EXPORT_OK = qw/strpduration strfduration/;
@@ -53,7 +54,7 @@ sub base { croak("No arguments should be passed to base. Use set_base() instead.
 sub set_base {
     my $self = shift;
     my $newbase = shift;
-    croak("Argument to set_base() must be a DateTime object.") unless ref($newbase) eq 'DateTime';
+    croak("Argument to set_base() must be a DateTime object.") unless blessed($newbase) && $newbase->isa('DateTime');
     $self->{base} = $newbase;
     return $self;
 }
@@ -249,7 +250,7 @@ sub normalise {
             or not $self->base
         );
 
-    my %delta = (ref($_[0]) =~/^DateTime::Duration/)
+    my %delta = (blessed($_[0]) && $_[0]->isa('DateTime::Duration'))
         ? $_[0]->deltas
         : @_;
 
@@ -346,7 +347,7 @@ sub normalise {
 
 sub normalise_no_base {
     my $self = shift;
-    my %delta = (ref($_[0]) =~/^DateTime::Duration/) ? $_[0]->deltas : @_;
+    my %delta = (blessed($_[0]) && $_[0]->isa('DateTime::Duration')) ? $_[0]->deltas : @_;
 
     if (delete $delta{negative}) {
         foreach (keys %delta) { $delta{$_} *= -1 }
